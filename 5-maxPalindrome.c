@@ -35,7 +35,7 @@ return 0;
 bool isP(char *p, int l){
 	bool flag = true;
 	for (int i=0;i<=l/2;++i){
-		if (*(p+l-1-i) != *(p+i)){
+		if (p[l-1-i] != p[i]){
 			flag = false;
 			break;
 		}
@@ -45,11 +45,10 @@ bool isP(char *p, int l){
 int bisP(char *p){
 	int max=1;
 	int n=1;
-	while (p[n] != '\0'){
-		if (p[0] == p[n] && isP(p, n+1)){
-			max = n+1;
+	while (p[n++] != '\0'){
+		if (isP(p, n)){
+			max = n;
 		}
-		n++;
 	}
 	return max;
 }
