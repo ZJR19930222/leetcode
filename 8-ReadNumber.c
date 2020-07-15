@@ -38,8 +38,6 @@ int ReadNum(void){
       break;
     } else if (count==0 && t==0);
     else {
-      if (count==0){
-      }
       if ((count==9 && (sum>214748364||(sum == 214748364 && t>7))) || count>9){
 	sum = sign=='-'?INF_MIN:INF_MAX;
 	isOverFlow = 1;
