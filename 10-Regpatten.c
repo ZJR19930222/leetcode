@@ -147,16 +147,7 @@ char* DelErrorSlashes(char *p, int len){
   char *t=(char*)malloc(sizeof(char)*(len+1));
   char *tmp=t;
   for (;;){
-    if (*p==SLASHES&&*(p+1)==SLASHES){
-      /*----\\----*/
-      *(tmp++)=*(p++);
-      *(tmp++)=*(p++);
-    }else if (*p==SLASHES&&*(p+1)==STAR){
-      /*----\*----*/
-      *(tmp++)=*(p++);
-      *(tmp++)=*(p++);
-    }else if (*p==SLASHES&&*(p+1)==DOT){
-      /*----\.----*/
+    if (*p==SLASHES && (*(p+1)==SLASHES || *(p+1)==STAR || *(p+1)==DOT)){
       *(tmp++)=*(p++);
       *(tmp++)=*(p++);
     }else if (*p==SLASHES) {
@@ -173,31 +164,27 @@ char* DelErrorSlashes(char *p, int len){
 
 struct MatchTerm ComplMatch(char *s, char *p){
   struct MatchTerm mt;
-  char tmpch;
-  char *t=s;
-  bool flag;
-  int count=0;
-  int start=0;
+  char tmpch,*t=s;
+  bool ismt;
+  int end,count=0,start=0;
   do {
-    int end=0;
-    bool ismt = false;
+    end=0;
+    ismt = false;
     for (int i=0;*t!=NL;i++){
       tmpch=*(++t);
       *t=NL;
-      flag = IsRegMatch(s+start,p);
-      *t=tmpch;
-      if (flag){
+      if (IsRegMatch(s+start,p)){
 	end=i;
 	ismt=true;
       }
+      *t=tmpch;
     }
     if (ismt){
       char *ctp=(char*)malloc(sizeof(char)*(end+2));
       for (int k=0;k<end+1;++k)
 	ctp[k]=s[start+k];
       ctp[end+1]=NL;
-      mt.pstring[count]=ctp;
-      count++;
+      mt.pstring[count++]=ctp;
     }
     start += end+1;
     t=&s[start];
