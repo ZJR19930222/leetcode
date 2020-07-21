@@ -9,6 +9,9 @@
 #define STAR '*'
 #define DOT '.'
 #define SLASHES '\\'
+#define LP '['
+#define RP ']'
+#define PLUS '+'
 
 struct MatchTerm {
   int len;
@@ -29,9 +32,9 @@ int main(){
   bool flag;
   flag=IsRegMatch(String,NewPatten);
   if (flag)
-    printf("\e[36m匹配成功！\e[0m\n");
+    printf("\e[36m整体匹配成功！\e[0m\n");
   else
-    printf("\e[35m匹配失败！\e[0m\n");
+    printf("\e[35m整体匹配失败！\e[0m\n");
   struct MatchTerm resultP;
   resultP=ComplMatch(String,NewPatten);
   int l = resultP.len;
@@ -51,7 +54,8 @@ bool IsRegMatch(char *s, char *p){
     if (*p==STAR){
       /*-----p = *#### -----*/
       result = IsRegMatch(s,p+1);
-    }else if (*p==DOT&&*(p+1)==STAR){
+    }
+    else if (*p==DOT&&*(p+1)==STAR){
       /*-----p=.*### ------*/
       for (;;){
 	if (IsRegMatch(s,p+2)){
@@ -61,11 +65,105 @@ bool IsRegMatch(char *s, char *p){
 	if (*(s++)==NL)
 	  break;
       }
-    }else if (*p==DOT&&*(p+1)!=STAR){
+    }
+    else if (*p==DOT&&*(p+1)!=STAR){
       /*-----p=.####------*/
       if (*s!=NL)
 	result=IsRegMatch(s+1,p+1);
-    }else if (*p==SLASHES&&*(p+1)==SLASHES&&*(p+2)==STAR){
+    }
+    else if (*p==LP){
+      int choice=0;
+      while (*(p+choice+1)!=RP&&*(p+choice+1)!=NL){
+	choice++;
+      }
+      if (*(p+choice+1)==RP&&*(p+choice+2)==STAR){
+	char *t = s;
+	for (int i=1;i<=choice;i++){
+	  if (*t==*(p+i)){
+	    do {
+	      if (IsRegMatch(++t,p+choice+3)){
+		result=true;
+		break;
+	      }
+	    }while (*t==*(p+i));
+	    break;
+	  }
+	}
+	if (!result){
+	  result=IsRegMatch(s,p+choice+3);
+	}
+      }else if (*(p+choice+1)==RP&&*(p+choice+2)==PLUS){
+	char *t = s;
+	bool flag;
+	do {
+	  flag=false;
+	  if (IsRegMatch(t,p+choice+3)){
+	    result=true;
+	    break;
+	  }
+	  for (int i=1;i<=choice;i++){
+	    if (*t==*(p+i)){
+	      flag=true;
+	      break;
+	    }
+	  }
+	  t++;
+	}while (flag);
+	if (!result){
+	  result=IsRegMatch(s,p+choice+3);
+	}
+      }
+      else if (*(p+choice+1)==RP){
+	for (int i=1;i<=choice;i++){
+	  if (*s==*(p+i)){
+	    result = IsRegMatch(s+1,p+choice+2);
+	    break;
+	  }
+	}
+      }
+      else if (*(p+choice+1)==NL&&*(s+1)==NL){
+	for (int i=1;i<=choice;i++){
+	  if (*s==*(p+i)){
+	    result = true;
+	    break;
+	  }
+	}
+      }
+    }
+    else if (*p==SLASHES&&*(p+1)==LP&&*(p+2)==STAR){
+      /*----p = \[* ------*/
+      do {
+	if (IsRegMatch(s,p+3)){
+	  result=true;
+	  break;
+	}
+      }while(*(s++)==LP);
+    }
+    else if (*p==SLASHES&&*(p+1)==LP&&*(p+2)!=STAR){
+      /*-----p = \[A -----*/
+      if (*s==LP){
+	result=IsRegMatch(s+1,p+2);
+      }
+    }
+    else if (*p==SLASHES&&*(p+1)==PLUS){
+      result=IsRegMatch(s,p+1);
+    }
+    /*else if (*p==SLASHES&&*(p+1)==RP&&*(p+2)==STAR){
+      ----p = \]* ------
+      do {
+	if (IsRegMatch(s,p+3)){
+	  result=true;
+	  break;
+	}
+      }while(*(s++)==RP);
+    }
+    else if (*p==SLASHES&&*(p+1)==RP&&*(p+2)!=STAR){
+      -----p = \]A -----
+      if (*s==RP){
+	result=IsRegMatch(s+1,p+2);
+      }
+    }*/
+    else if (*p==SLASHES&&*(p+1)==SLASHES&&*(p+2)==STAR){
       /*----p = \\* ------*/
       do {
 	if (IsRegMatch(s,p+3)){
@@ -73,12 +171,14 @@ bool IsRegMatch(char *s, char *p){
 	  break;
 	}
       }while(*(s++)==SLASHES);
-    }else if (*p==SLASHES&&*(p+1)==SLASHES&&*(p+2)!=STAR){
+    }
+    else if (*p==SLASHES&&*(p+1)==SLASHES&&*(p+2)!=STAR){
       /*-----p = \\A -----*/
       if (*s==SLASHES){
 	result=IsRegMatch(s+1,p+2);
       }
-    }else if (*p==SLASHES&&*(p+1)==STAR&&*(p+2)==STAR){
+    }
+    else if (*p==SLASHES&&*(p+1)==STAR&&*(p+2)==STAR){
       /*-----p = \** -----*/
       do {
 	if (IsRegMatch(s,p+3)){
@@ -86,7 +186,8 @@ bool IsRegMatch(char *s, char *p){
 	  break;
 	}
       }while(*(s++)==STAR);
-    }else if (*p==SLASHES&&*(p+1)==STAR&&*(p+2)!=STAR){
+    }
+    else if (*p==SLASHES&&*(p+1)==STAR&&*(p+2)!=STAR){
       /*-----p = \*A -----*/
       if (*s==STAR){
 	result=IsRegMatch(s+1,p+2);
@@ -147,7 +248,7 @@ char* DelErrorSlashes(char *p, int len){
   char *t=(char*)malloc(sizeof(char)*(len+1));
   char *tmp=t;
   for (;;){
-    if (*p==SLASHES && (*(p+1)==SLASHES || *(p+1)==STAR || *(p+1)==DOT)){
+    if (*p==SLASHES && (*(p+1)==SLASHES || *(p+1)==STAR || *(p+1)==DOT || *(p+1)==LP|| *(p+1)==PLUS|| *(p+1)==RP)){
       *(tmp++)=*(p++);
       *(tmp++)=*(p++);
     }else if (*p==SLASHES) {
