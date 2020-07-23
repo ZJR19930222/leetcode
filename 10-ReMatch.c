@@ -12,6 +12,8 @@
 #define LP '['
 #define RP ']'
 #define PLUS '+'
+#define EXP '-'
+#define MAX_PATTEN 256
 
 struct MatchTerm {
   int len;
@@ -21,6 +23,7 @@ char* Read_Line(void);
 bool IsRegMatch(char *s, char *p);
 char* DelErrorSlashes(char *p, int len);
 struct MatchTerm ComplMatch(char *s, char *p);
+char* ExpPatten(char *p);
 
 int main(){
   char *String, *Patten;
@@ -28,7 +31,9 @@ int main(){
   String = Read_Line();
   printf("\e[33mEnter Patten String\e[0m>>");
   Patten = Read_Line();
-  char *NewPatten = DelErrorSlashes(Patten, strlen(Patten));
+  char *NewPatten = ExpPatten(DelErrorSlashes(Patten, strlen(Patten)));
+  printf("%s\n",NewPatten);
+  
   bool flag;
   flag=IsRegMatch(String,NewPatten);
   if (flag)
@@ -294,4 +299,42 @@ struct MatchTerm ComplMatch(char *s, char *p){
   }while(count<NUM_MAX_MATCH);
   mt.len=count;
   return mt;
+}
+char* ExpPatten(char *p){
+  char *ttm = (char*)malloc(sizeof(char)*(MAX_PATTEN+1));
+  char *t = ttm;
+  for (;;){
+    if (*p==SLASHES&&*(p+1)==LP){
+      *(t++)=*(p++);
+      *(t++)=*(p++);
+    }
+    else if (*p==LP){
+      *(t++)=*(p++);
+      *(t++)=*(p++);
+      while (*p!=RP && *p!=NL){
+	if (*p==EXP && *(p+1)!=RP){
+	  if (*(p+1)>*(p-1)){
+	    for (char temp=*(p-1);temp<*(p+1);temp++){
+	      *(t++)=temp+1;
+	    }
+	  }else {
+	    for (char temp=*(p-1);temp>*(p+1);temp--){
+	      *(t++)=temp-1;
+	    }
+	  }
+	  p=p+2;
+	}else {
+	  *(t++)=*(p++);
+	}
+      }
+    }
+    else {
+      *(t++)=*(p++);
+    }
+    if (*p==NL){
+      *t=NL;
+      break;
+    }
+  }
+  return ttm;
 }
