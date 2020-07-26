@@ -5,7 +5,7 @@
 
 #define BLOCK 20
 #define MAX_MATCH_TERM 200
-#define MAX_PATTEN_EXPAND 256
+#define MAX_PATTEN_EXPAND 500
 #define NL '\0'
 #define STAR '*'
 #define DOT '.'
@@ -90,6 +90,7 @@ char* DelErrorSlash(char *p, int len){
 	case PLUS:
 	case LP:
 	case RP:
+	case 'w':
 	  *t++=*p++;
 	  *t++=*p++;
 	  break;
@@ -241,9 +242,26 @@ char* ExpPatten(char *p){
   char *q=malloc(MAX_PATTEN_EXPAND+1);
   char *t =q;
   for (;;){
-    if (*p==SLASH){
+    if (*p==SLASH && *(p+1)!='w'){
       *t++=*p++;
       *t++=*p++;
+    }
+    else if (*p==SLASH){
+      // expand [a-zA-Z0-9_]
+      *t++=LP;
+      char ch;
+      for (ch='a';ch<='z';ch++){
+	*t++=ch;
+      }
+      for (ch='A';ch<='Z';ch++){
+	*t++=ch;
+      }
+      for (ch='0';ch<='9';ch++){
+	*t++=ch;
+      }
+      *t++='_';
+      *t++=RP;
+      p +=2;
     }
     else if (*p==LP){
       *t++=*p++;
